@@ -55,8 +55,8 @@ class HandDetector:
             base_options=base_options,
             running_mode=mp_vision.RunningMode.VIDEO,
             num_hands=max_hands,
-            min_hand_detection_confidence=0.75,
-            min_hand_presence_confidence=0.75,
+            min_hand_detection_confidence=0.50, 
+            min_hand_presence_confidence=0.40,   
             min_tracking_confidence=tracking_confidence,
         )
         self._detector = mp_vision.HandLandmarker.create_from_options(options)
@@ -70,7 +70,6 @@ class HandDetector:
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-        # Tasks VIDEO mode requires strictly increasing timestamps
         ts = int(time.monotonic() * 1000)
         if ts <= self._last_ts_ms:
             ts = self._last_ts_ms + 1
@@ -83,7 +82,7 @@ class HandDetector:
 
         detections: List[HandDetection] = []
         for i, hand_lms in enumerate(result.hand_landmarks):
-            label = result.handedness[i][0].category_name   # 'Left' / 'Right'
+            label = result.handedness[i][0].category_name
             score = result.handedness[i][0].score
 
             xs = [lm.x * w for lm in hand_lms]

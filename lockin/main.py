@@ -14,6 +14,7 @@ from .alert_system import AlertSystem
 from .camera import Camera
 from .hand_detector import HandDetector
 from .phone_classifier import PhoneClassifier
+from .tracker import PhoneTracker
 from .ui import draw_alert_overlay, draw_controls_hud, draw_phone_bboxes
 
 logger = logging.getLogger(__name__)
@@ -102,11 +103,14 @@ def run(args: argparse.Namespace):
             volume=args.volume / 100.0,
         )
 
+        phone_tracker = PhoneTracker(max_age=8, iou_thresh=0.25)
+
         logger.info("All systems go. Press Q or ESC to quit.")
 
         frame_n          = 0
         hand_detections  = []
         phone_detections = []
+        tracked_phones   = []
 
         try:
             while camera.is_running:
@@ -116,17 +120,20 @@ def run(args: argparse.Namespace):
 
                 frame_n += 1
 
-                # Detection
                 hand_detections = hand_detector.detect(frame)
 
-                # Only run the phone classifier when hands are present
                 if hand_detections:
-                    hand_bboxes      = [d.bbox for d in hand_detections]
-                    phone_detections = phone_classifier.classify(frame, hand_bboxes)
+                    if frame_n % 2 == 0:
+                        hand_bboxes      = [d.bbox for d in hand_detections]
+                        phone_detections = phone_classifier.classify(frame, hand_bboxes)
+                    else:
+                        phone_detections = []   # tracker will interpolate
+                    tracked_phones = phone_tracker.update(phone_detections)
                 else:
                     phone_detections = []
+                    tracked_phones   = phone_tracker.update([])  # age all tracks
 
-                phone_in_hand = any(d.in_hand for d in phone_detections)
+                phone_in_hand = len(tracked_phones) > 0
 
                 # State machine
                 alert_state = alert_system.update(phone_in_hand)
@@ -135,18 +142,18 @@ def run(args: argparse.Namespace):
                 if show_landmarks:
                     frame = hand_detector.draw_landmarks(frame, hand_detections)
 
-                frame = draw_phone_bboxes(frame, phone_detections)
+                frame = draw_phone_bboxes(frame, tracked_phones)
                 frame = draw_alert_overlay(frame, alert_state, alert_system.is_muted)
                 frame = draw_controls_hud(frame)
 
                 if show_debug:
                     _draw_debug(frame, hand_detections, phone_detections,
-                                alert_state, frame_n)
+                                tracked_phones, alert_state, frame_n)
 
                 cv2.imshow("LockIn!", frame)
 
                 key = cv2.waitKey(1) & 0xFF
-                # Handle keyboardcontrols
+                # Handle keyboard controls
                 if key in (ord("q"), ord("Q"), 27):
                     break
                 if cv2.getWindowProperty("LockIn!", cv2.WND_PROP_VISIBLE) < 1:
@@ -166,12 +173,13 @@ def run(args: argparse.Namespace):
 # Debug overlay and main entry point
 # ---------------------------------------------------------------------------
 
-def _draw_debug(frame, hands, phones, state, frame_n):
+def _draw_debug(frame, hands, phones, tracked, state, frame_n):
     lines = [
-        f"frame : {frame_n}",
-        f"hands : {len(hands)}",
-        f"phones: {len(phones)}  in-hand={sum(1 for p in phones if p.in_hand)}",
-        f"state : {state.name}",
+        f"frame  : {frame_n}",
+        f"hands  : {len(hands)}",
+        f"yolo   : {len(phones)}  in-hand={sum(1 for p in phones if p.in_hand)}",
+        f"tracks : {len(tracked)}  (ages: {[t.age for t in tracked]})",
+        f"state  : {state.name}",
     ]
     y = 18
     for line in lines:
