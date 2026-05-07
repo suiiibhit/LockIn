@@ -1,0 +1,33 @@
+# Core Dependencies for LockIn!
+# Python 3.9+
+
+# Webcam and video processing
+opencv-python==4.8.0.76
+
+# Hand detection
+mediapipe==0.10.0
+
+# Phone detection (YOLO)
+ultralytics==8.0.196
+
+# Audio playback (cross-platform)
+pygame==2.5.0
+
+# Array operations
+numpy==1.24.3
+
+# Image processing
+Pillow==10.0.0
+
+# Optional: Audio manipulation
+pydub==0.25.1
+
+# Development/Testing
+pytest==7.4.0
+pytest-cov==4.1.0
+black==23.7.0
+flake8==6.0.0
+mypy==1.4.1
+
+# Optional: Text-to-speech (fallback)
+pyttsx3==2.90
