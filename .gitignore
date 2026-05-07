@@ -131,6 +131,8 @@ Thumbs.db
 
 # Project specific
 models/*.pt
+models/*.task
+*.pt
 sounds/*.wav
 .env.local
 *.bak
