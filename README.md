@@ -54,18 +54,15 @@ python -m lockin --camera 0 --confidence 0.5 --volume 80
 
 ## Audio Files
 
-You need to provide three audio files in `lockin/sounds/`:
+You need to provide three audio files in `lockin/sounds/`, however there are some default files available:
 
 1. **`phone_detected.wav`** (~2-3 seconds)
-   - Irritating voice
    - Purpose: Initial alert when phone detected
 
 2. **`phone_detected_loop.wav`** (shorter duration)
-   - Looping version of the alert
    - Purpose: Repeats until phone is removed
 
 3. **`good_boy.wav`** (~1-2 seconds)
-   - Encouraging tone: "Good boy!"
    - Purpose: Positive reinforcement when phone is put down
 
 The app will warn you if audio files are missing.
@@ -88,8 +85,6 @@ The app will warn you if audio files are missing.
 - **Pillow** - Image processing
 
 ## Development
-
-For detailed development information, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
 
 ### Running Tests
 
@@ -193,4 +188,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 For questions or feedback, feel free to open an issue on GitHub.
 
 ---
-
